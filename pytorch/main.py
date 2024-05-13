@@ -46,12 +46,12 @@ def pre_load():
         from torch.utils.cpp_extension import load
         module = load(name='tiny_operator',
                       extra_include_paths=["include"],
-                      sources=["pytorch/tensor_add_ng_ops.cpp", "kernel/tensor_add_ng.cu"],
+                      sources=["pytorch/tiny_operator.cpp", "kernel/tensor_add_ng.cu"],
                       verbose=True)
         res = module.torch_launch_tensor_add_ng
     elif args.compiler == 'setup':
-        import tiny_operator
-        res = tiny_operator.torch_launch_tensor_add_ng
+        import tensor_add_ng
+        res = tensor_add_ng.torch_launch_tensor_add_ng
     elif args.compiler == 'cmake':
         torch.ops.load_library("build/tiny_operator.so")
         res = torch.ops.tiny_operator.torch_launch_tensor_add_ng
