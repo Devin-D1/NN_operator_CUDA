@@ -13,10 +13,11 @@ testn = 10
 
 def record_time(fun):
     times = list()
+    res = None
 
     # GPU Warm up
     for _ in range(0, testn):
-        fun()
+        res = fun()
 
     for _ in range(0, testn):
         torch.cuda.synchronize(device="cuda:0")
@@ -25,7 +26,7 @@ def record_time(fun):
         torch.cuda.synchronize(device="cuda:0")
         end = time.time()
         times.append((end - start) * 1e6)
-    return times
+    return times, res
 
 def run_torch():
     c = a + b
@@ -33,6 +34,7 @@ def run_torch():
 
 def run_cuda():
     cuda_module.torch_launch_tensor_add_ng(cuda_c, a, b, n)
+    return cuda_c
 
 def pre_load():
     module = load(name='torch_operator',
@@ -45,9 +47,11 @@ if __name__ == "__main__":
     cuda_module = pre_load()
 
     print("Run torch...")
-    torch_time = record_time(run_torch)
+    torch_time, torch_res = record_time(run_torch)
     print("Torch time:  {:.3f}us".format(np.mean(torch_time)))
 
     print("Run CUDA operator...")
-    cuda_time = record_time(run_cuda)
+    cuda_time, cuda_res = record_time(run_cuda)
     print("CUDA time:  {:.3f}us".format(np.mean(cuda_time)))
+
+    assert(torch_res.equal(cuda_res))
