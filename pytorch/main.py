@@ -1,7 +1,7 @@
 import time
 import torch
+import argparse
 import numpy as np
-from torch.utils.cpp_extension import load
 
 print("Torch version: " + torch.__version__)
 
@@ -33,18 +33,35 @@ def run_torch():
     return c.contiguous()
 
 def run_cuda():
-    cuda_module.torch_launch_tensor_add_ng(cuda_c, a, b, n)
+    cuda_func(cuda_c, a, b, n)
     return cuda_c
 
 def pre_load():
-    module = load(name='torch_operator',
-                  extra_include_paths=["include"],
-                  sources=["pytorch/tensor_add_ng_ops.cpp", "kernel/tensor_add_ng.cu"],
-                  verbose=True)
-    return module
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--compiler', type=str, choices=['jit', 'setup', 'cmake'], default='jit')
+    args = parser.parse_args()
+    res = None
+
+    if args.compiler == 'jit':
+        from torch.utils.cpp_extension import load
+        module = load(name='tiny_operator',
+                      extra_include_paths=["include"],
+                      sources=["pytorch/tensor_add_ng_ops.cpp", "kernel/tensor_add_ng.cu"],
+                      verbose=True)
+        res = module.torch_launch_tensor_add_ng
+    elif args.compiler == 'setup':
+        import tiny_operator
+        res = tiny_operator.torch_launch_tensor_add_ng
+    elif args.compiler == 'cmake':
+        torch.ops.load_library("build/tiny_operator.so")
+        res = torch.ops.tiny_operator.torch_launch_tensor_add_ng
+    else:
+        raise Exception("Type of cuda compiler must be one of jit/setup/cmake.")
+
+    return res
 
 if __name__ == "__main__":
-    cuda_module = pre_load()
+    cuda_func = pre_load()
 
     print("Run torch...")
     torch_time, torch_res = record_time(run_torch)

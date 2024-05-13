@@ -18,3 +18,8 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 		  &torch_launch_tensor_add_ng,
 		  "tensor_add_ng wrapper");
 }
+
+TORCH_LIBRARY(tiny_operator, m)
+{
+	m.def("torch_launch_tensor_add_ng", torch_launch_tensor_add_ng);
+}
