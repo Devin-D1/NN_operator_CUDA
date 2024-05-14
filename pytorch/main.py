@@ -53,7 +53,7 @@ def pre_load():
         import tensor_add_ng
         res = tensor_add_ng.torch_launch_tensor_add_ng
     elif args.compiler == 'cmake':
-        torch.ops.load_library("build/tiny_operator.so")
+        torch.ops.load_library("build/libtiny_operator.so")
         res = torch.ops.tiny_operator.torch_launch_tensor_add_ng
     else:
         raise Exception("Type of cuda compiler must be one of jit/setup/cmake.")
